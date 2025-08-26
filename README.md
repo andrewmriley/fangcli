@@ -1,5 +1,5 @@
 # fangcli
-A CLI interface to fangbreaker.zone for Everquest. This application is not associate with the site nor with the video game Everquest.
+A CLI interface to fangbreaker.zone for Everquest. This application is not associated with the site nor with the video game Everquest.
 
 This is a work in progress while I learn Go.
 

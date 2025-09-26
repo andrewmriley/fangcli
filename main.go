@@ -65,64 +65,6 @@ func getJson(conf configuration) []zone {
 	return zones
 }
 
-func getZones(conf configuration) []zone {
-	if conf.mock {
-		return []zone{
-			{
-				ID:        1,
-				ZoneID:    1,
-				Name:      "Pizza",
-				Expansion: "Green",
-				MinLevel:  1,
-				MaxLevel:  50,
-				ZoneType:  "Indoor",
-				Bonus:     "respawn",
-			},
-			{
-				ID:        2,
-				ZoneID:    2,
-				Name:      "Chicken",
-				Expansion: "Blue",
-				MinLevel:  1,
-				MaxLevel:  20,
-				ZoneType:  "Indoor",
-				Bonus:     "coin",
-			},
-			{
-				ID:        3,
-				ZoneID:    3,
-				Name:      "Corn",
-				Expansion: "Blue",
-				MinLevel:  20,
-				MaxLevel:  45,
-				ZoneType:  "Outdoor",
-				Bonus:     "respawn",
-			},
-			{
-				ID:        4,
-				ZoneID:    4,
-				Name:      "Burger",
-				Expansion: "Blue",
-				MinLevel:  1,
-				MaxLevel:  25,
-				ZoneType:  "Indoor",
-				Bonus:     "respawn",
-			},
-			{
-				ID:        5,
-				ZoneID:    5,
-				Name:      "Hotdog",
-				Expansion: "Green",
-				MinLevel:  1,
-				MaxLevel:  50,
-				ZoneType:  "Outdoor",
-				Bonus:     "none",
-			},
-		}
-	}
-	return getJson(conf)
-}
-
 func processZones(conf configuration, allZones []zone) sortedZones {
 	bonusZonesByType := make(sortedZones)
 	for _, zone := range allZones {
@@ -173,7 +115,7 @@ func displayZones(conf configuration, zonesByType sortedZones) {
 
 func main() {
 	conf := getConfig()
-	allZones := getZones(conf)
+	allZones := getJson(conf)
 	zonesByType := processZones(conf, allZones)
 	displayZones(conf, zonesByType)
 

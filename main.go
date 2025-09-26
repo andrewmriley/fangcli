@@ -68,11 +68,20 @@ func getJson(conf configuration) []zone {
 func processZones(conf configuration, allZones []zone) sortedZones {
 	bonusZonesByType := make(sortedZones)
 	for _, zone := range allZones {
+		if zone.Bonus == "none" {
+			continue
+		}
 		if zone.MinLevel >= conf.minlevel && zone.MaxLevel <= conf.maxlevel && (conf.expansion == "" || strings.ToLower(conf.expansion) == strings.ToLower(zone.Expansion)) {
 			bonusZonesByType[zone.Bonus] = append(bonusZonesByType[zone.Bonus], zone)
 		}
 	}
-	fmt.Println(bonusZonesByType)
+	for _, zones := range bonusZonesByType {
+		if conf.sortlevel == "desc" {
+			sort.Sort(sort.Reverse(LevelSorter(zones)))
+		} else {
+			sort.Sort(LevelSorter(zones))
+		}
+	}
 	return bonusZonesByType
 }
 
@@ -95,11 +104,6 @@ func displayZones(conf configuration, zonesByType sortedZones) {
 	displayCount := 0
 	for key, zones := range zonesByType {
 		if key != "none" && key != "unconfirmed" && (conf.bonus == "" || key == conf.bonus) {
-			if conf.sortlevel == "desc" {
-				sort.Sort(sort.Reverse(LevelSorter(zones)))
-			} else {
-				sort.Sort(LevelSorter(zones))
-			}
 			fmt.Println("\n---", key, "---")
 			for _, zone := range zones {
 				fmt.Println(zone.Name, zone.Expansion, zone.MinLevel, zone.MaxLevel)

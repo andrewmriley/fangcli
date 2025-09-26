@@ -29,7 +29,6 @@ type configuration struct {
 	sortlevel string
 	expansion string
 	quiet     bool
-	mock      bool
 	url       string
 }
 
@@ -95,7 +94,6 @@ func getConfig() configuration {
 	flag.StringVar(&conf.sortlevel, "sortbylevel", "asc", "Sort (ASC or DESC)")
 	flag.StringVar(&conf.expansion, "expansion", "", "Expansion name")
 	flag.BoolVar(&conf.quiet, "quiet", false, "Suppress header messages")
-	flag.BoolVar(&conf.mock, "mock", false, "Use mocked data instead of live JSON.")
 	flag.Parse()
 	return conf
 }

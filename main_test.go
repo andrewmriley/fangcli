@@ -71,7 +71,6 @@ func Test_getConfig(t *testing.T) {
 				sortlevel: "asc",
 				expansion: "",
 				quiet:     false,
-				mock:      false,
 				url:       "https://fangbreaker.zone/api/bonuses/today",
 			}},
 	}

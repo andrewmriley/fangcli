@@ -194,6 +194,42 @@ func Test_processZones(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Expansion_Exact",
+			args: args{configuration{expansion: "Green", minlevel: 1, maxlevel: 500}, mockZones},
+			want: sortedZones{
+				"respawn": []zone{
+					{
+						ID:        1,
+						ZoneID:    1,
+						Name:      "Pizza",
+						Expansion: "Green",
+						MinLevel:  1,
+						MaxLevel:  50,
+						ZoneType:  "Indoor",
+						Bonus:     "respawn",
+					},
+				},
+			},
+		},
+		{
+			name: "Expansion_lower",
+			args: args{configuration{expansion: "green", minlevel: 1, maxlevel: 500}, mockZones},
+			want: sortedZones{
+				"respawn": []zone{
+					{
+						ID:        1,
+						ZoneID:    1,
+						Name:      "Pizza",
+						Expansion: "Green",
+						MinLevel:  1,
+						MaxLevel:  50,
+						ZoneType:  "Indoor",
+						Bonus:     "respawn",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

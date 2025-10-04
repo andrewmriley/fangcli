@@ -32,14 +32,15 @@ fangcli
 
 You can use the following flags to filter and sort the output:
 
-| Argument | Description | Values |
-| :--- | :--- | :--- |
-| `-bonus` | Limit the output to zones that list a specific bonus. | `experience`, `AA`, `coin`, `loot`, `rare`, `skill`, `respawn`, `faction` |
-| `-minlevel` | Show zones **greater than or equal to** this level. | Integer |
-| `-maxlevel` | Show zones **less than or equal to** this level. | Integer |
-| `-expansion` | Limit the results to a specific EverQuest expansion. | `classic`, `velious`, etc. |
-| `-sortbylevel` | Change the sort direction of the zones by level. Default is **ASC**. | `ASC` or `DESC` |
-| `-quiet` | Hide extra output, focusing only on the zone list. | (Flag only) |
+| Argument       | Description                                                          | Values                                                                    |
+|:---------------|:---------------------------------------------------------------------|:--------------------------------------------------------------------------|
+| `-bonus`       | Limit the output to zones that list a specific bonus.                | `experience`, `AA`, `coin`, `loot`, `rare`, `skill`, `respawn`, `faction` |
+| `-minlevel`    | Show zones **greater than or equal to** this level.                  | Integer                                                                   |
+| `-maxlevel`    | Show zones **less than or equal to** this level.                     | Integer                                                                   |
+| `-expansion`   | Limit the results to a specific expansion.                           | `classic`, `velious`, etc.                                                |
+| `-zonetype`    | Limit the results to a specific type of zone.                        | `indoor`, `outdoor`                                                 |
+| `-sortbylevel` | Change the sort direction of the zones by level. Default is **ASC**. | `ASC` or `DESC`                                                           |
+| `-quiet`       | Hide extra output, focusing only on the zone list.                   | (Flag only)                                                               |
 
 ### Examples
 

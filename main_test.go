@@ -195,7 +195,7 @@ func Test_processZones(t *testing.T) {
 			},
 		},
 		{
-			name: "Expansion_Exact",
+			name: "Expansion",
 			args: args{configuration{expansion: "Green", minlevel: 1, maxlevel: 500}, mockZones},
 			want: sortedZones{
 				"respawn": []zone{
@@ -213,18 +213,18 @@ func Test_processZones(t *testing.T) {
 			},
 		},
 		{
-			name: "Expansion_lower",
-			args: args{configuration{expansion: "green", minlevel: 1, maxlevel: 500}, mockZones},
+			name: "Zonetype",
+			args: args{configuration{zonetype: "Outdoor", minlevel: 1, maxlevel: 500}, mockZones},
 			want: sortedZones{
 				"respawn": []zone{
 					{
-						ID:        1,
-						ZoneID:    1,
-						Name:      "Pizza",
-						Expansion: "Green",
-						MinLevel:  1,
-						MaxLevel:  50,
-						ZoneType:  "Indoor",
+						ID:        3,
+						ZoneID:    3,
+						Name:      "Corn",
+						Expansion: "Blue",
+						MinLevel:  20,
+						MaxLevel:  45,
+						ZoneType:  "Outdoor",
 						Bonus:     "respawn",
 					},
 				},
@@ -235,6 +235,46 @@ func Test_processZones(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := processZones(tt.args.conf, tt.args.allZones); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("processZones() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_compareLower(t *testing.T) {
+	type args struct {
+		value        string
+		confExpected string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Empty",
+			args: args{value: "", confExpected: ""},
+			want: true,
+		},
+		{
+			name: "Same_samecase",
+			args: args{value: "Indoor", confExpected: "Indoor"},
+			want: true,
+		},
+		{
+			name: "Same_diffcase",
+			args: args{value: "Indoor", confExpected: "indoor"},
+			want: true,
+		},
+		{
+			name: "Different",
+			args: args{value: "tuesday", confExpected: "indoor"},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := compareLower(tt.args.value, tt.args.confExpected); got != tt.want {
+				t.Errorf("compareLower() = %v, want %v", got, tt.want)
 			}
 		})
 	}

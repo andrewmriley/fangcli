@@ -28,6 +28,7 @@ type configuration struct {
 	maxlevel  int
 	sortlevel string
 	expansion string
+	zonetype  string
 	quiet     bool
 	url       string
 }
@@ -64,13 +65,20 @@ func getJson(conf configuration) []zone {
 	return zones
 }
 
+func compareLower(value string, confExpected string) bool {
+	if confExpected == "" {
+		return true
+	}
+	return strings.ToLower(value) == strings.ToLower(confExpected)
+}
+
 func processZones(conf configuration, allZones []zone) sortedZones {
 	bonusZonesByType := make(sortedZones)
 	for _, zone := range allZones {
 		if zone.Bonus == "none" {
 			continue
 		}
-		if zone.MinLevel >= conf.minlevel && zone.MaxLevel <= conf.maxlevel && (conf.expansion == "" || strings.ToLower(conf.expansion) == strings.ToLower(zone.Expansion)) {
+		if zone.MinLevel >= conf.minlevel && zone.MaxLevel <= conf.maxlevel && compareLower(zone.Expansion, conf.expansion) && compareLower(zone.ZoneType, conf.zonetype) {
 			bonusZonesByType[zone.Bonus] = append(bonusZonesByType[zone.Bonus], zone)
 		}
 	}
@@ -93,6 +101,7 @@ func getConfig() configuration {
 	flag.IntVar(&conf.maxlevel, "maxlevel", 500, "Maximum level")
 	flag.StringVar(&conf.sortlevel, "sortbylevel", "asc", "Sort (ASC or DESC)")
 	flag.StringVar(&conf.expansion, "expansion", "", "Expansion name")
+	flag.StringVar(&conf.zonetype, "zonetype", "", "Indoor or outdoor")
 	flag.BoolVar(&conf.quiet, "quiet", false, "Suppress header messages")
 	flag.Parse()
 	return conf
@@ -101,7 +110,7 @@ func getConfig() configuration {
 func displayZones(conf configuration, zonesByType sortedZones) {
 	displayCount := 0
 	for key, zones := range zonesByType {
-		if key != "none" && key != "unconfirmed" && (conf.bonus == "" || key == conf.bonus) {
+		if key != "none" && key != "unconfirmed" && compareLower(key, conf.bonus) {
 			fmt.Println("\n---", key, "---")
 			for _, zone := range zones {
 				fmt.Println(zone.Name, zone.Expansion, zone.MinLevel, zone.MaxLevel)

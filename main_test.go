@@ -88,7 +88,6 @@ func Test_processZones(t *testing.T) {
 		conf     configuration
 		allZones []zone
 	}
-	defaultConf := getConfig()
 	tests := []struct {
 		name string
 		args args
@@ -96,7 +95,7 @@ func Test_processZones(t *testing.T) {
 	}{
 		{
 			name: "Sort_ASC",
-			args: args{defaultConf, mockZones},
+			args: args{configuration{minlevel: 1, maxlevel: 500}, mockZones},
 			want: sortedZones{
 				"coin": []zone{
 					{

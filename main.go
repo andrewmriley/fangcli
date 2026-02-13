@@ -6,34 +6,37 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 )
 
+var ZoneLookup = []string{"indoor", "outdoor"}
+var BonusLookup = []string{"aa", "coin", "experience", "faction", "loot", "none", "rare", "respawn", "skill", "unconfirmed"}
+
+// Not prepopulating this slice to avoid compiling in IP.
+var ExpansionLookup []string
+
 type zone struct {
-	ID        int    `json:"id"`
-	ZoneID    int    `json:"zoneId"`
-	Name      string `json:"name"`
-	Expansion string `json:"expansion"`
-	MinLevel  int    `json:"minLevel"`
-	MaxLevel  int    `json:"maxLevel"`
-	ZoneType  string `json:"zoneType"`
-	Bonus     string `json:"bonus"`
+	Name      string
+	Expansion int8
+	ZoneType  int8
+	Bonus     int8
+	MinLevel  uint8
+	MaxLevel  uint8
 }
 
 type configuration struct {
-	bonus     string
-	minlevel  int
-	maxlevel  int
 	sortlevel string
-	expansion string
-	zonetype  string
-	quiet     bool
-	url       string
+	bonus     int8
+	minlevel  uint8
+	maxlevel  uint8
+	expansion int8
+	zonetype  int8
 }
 
-type sortedZones map[string][]zone
+type sortedZones map[int8][]zone
 
 type LevelSorter []zone
 
@@ -41,16 +44,44 @@ func (a LevelSorter) Len() int           { return len(a) }
 func (a LevelSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a LevelSorter) Less(i, j int) bool { return a[i].MinLevel < a[j].MinLevel }
 
-func getJson(conf configuration) []zone {
-	myClient := &http.Client{Timeout: 10 * time.Second}
-	if !conf.quiet {
-		fmt.Print("Fetching from ", conf.url, "...")
+func uniqueAppend(val string, l *[]string) int8 {
+	lowval := strings.ToLower(val)
+	i := slices.Index(*l, lowval)
+	if i == -1 {
+		*l = append(*l, lowval)
+		i = len(*l) - 1
 	}
-	r, err := myClient.Get(conf.url)
+	return int8(i)
+}
+
+func (z *zone) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Name      string `json:"name"`
+		Expansion string `json:"expansion"`
+		ZoneType  string `json:"zoneType"`
+		Bonus     string `json:"bonus"`
+		MinLevel  uint8  `json:"minLevel"`
+		MaxLevel  uint8  `json:"maxLevel"`
+	}
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	z.Name = temp.Name
+	z.Expansion = uniqueAppend(temp.Expansion, &ExpansionLookup)
+	z.ZoneType = uniqueAppend(temp.ZoneType, &ZoneLookup)
+	z.Bonus = uniqueAppend(temp.Bonus, &BonusLookup)
+	z.MinLevel = temp.MinLevel
+	z.MaxLevel = temp.MaxLevel
+	return nil
+}
+
+func getJson() []zone {
+	const url = "https://fangbreaker.zone/api/bonuses/today"
+	myClient := &http.Client{Timeout: 10 * time.Second}
+	fmt.Print("Fetching from ", url, "...")
+	r, err := myClient.Get(url)
 	if err != nil {
-		if !conf.quiet {
-			fmt.Println(" Error.")
-		}
+		fmt.Println(" Error.")
 		log.Fatalln(err)
 	}
 	defer r.Body.Close()
@@ -59,26 +90,21 @@ func getJson(conf configuration) []zone {
 	if zones == nil {
 		log.Fatalln("Something went wrong, no zones were decoded.")
 	}
-	if !conf.quiet {
-		fmt.Println(" Done!")
-	}
+	fmt.Println(" Done!")
 	return zones
-}
-
-func compareLower(value string, confExpected string) bool {
-	if confExpected == "" {
-		return true
-	}
-	return strings.ToLower(value) == strings.ToLower(confExpected)
 }
 
 func processZones(conf configuration, allZones []zone) sortedZones {
 	bonusZonesByType := make(sortedZones)
+	none := int8(slices.Index(BonusLookup, "none"))
 	for _, zone := range allZones {
-		if zone.Bonus == "none" {
+		if zone.Bonus == none {
 			continue
 		}
-		if zone.MinLevel >= conf.minlevel && zone.MaxLevel <= conf.maxlevel && compareLower(zone.Expansion, conf.expansion) && compareLower(zone.ZoneType, conf.zonetype) {
+		checkLevel := zone.MinLevel >= conf.minlevel && zone.MinLevel <= conf.maxlevel
+		checkExpansion := conf.expansion == -1 || conf.expansion == zone.Expansion
+		checkZoneType := conf.zonetype == -1 || conf.zonetype == zone.ZoneType
+		if checkLevel && checkExpansion && checkZoneType {
 			bonusZonesByType[zone.Bonus] = append(bonusZonesByType[zone.Bonus], zone)
 		}
 	}
@@ -93,44 +119,53 @@ func processZones(conf configuration, allZones []zone) sortedZones {
 }
 
 func getConfig() configuration {
-	var conf = configuration{
-		url: "https://fangbreaker.zone/api/bonuses/today",
-	}
-	flag.StringVar(&conf.bonus, "bonus", "", "What type of bonus to filter on (experience, loot etc) Empty for all")
-	flag.IntVar(&conf.minlevel, "minlevel", 1, "Minimum level")
-	flag.IntVar(&conf.maxlevel, "maxlevel", 500, "Maximum level")
-	flag.StringVar(&conf.sortlevel, "sortbylevel", "asc", "Sort (ASC or DESC)")
-	flag.StringVar(&conf.expansion, "expansion", "", "Expansion name")
-	flag.StringVar(&conf.zonetype, "zonetype", "", "Indoor or outdoor")
-	flag.BoolVar(&conf.quiet, "quiet", false, "Suppress header messages")
+	var bonus string
+	var zonetype string
+	var expansion string
+	var sortlevel string
+	var minlevel int
+	var maxlevel int
+	flag.StringVar(&bonus, "bonus", "", "What type of bonus to filter on (experience, loot etc) Empty for all")
+	flag.IntVar(&minlevel, "minlevel", 1, "Minimum level")
+	flag.IntVar(&maxlevel, "maxlevel", 255, "Maximum level")
+	flag.StringVar(&sortlevel, "sortbylevel", "asc", "Sort (ASC or DESC)")
+	flag.StringVar(&expansion, "expansion", "", "Expansion name")
+	flag.StringVar(&zonetype, "zonetype", "", "Indoor or outdoor")
 	flag.Parse()
-	return conf
+	return configuration{
+		sortlevel: strings.ToLower(sortlevel),
+		bonus:     int8(slices.Index(BonusLookup, strings.ToLower(bonus))),
+		expansion: int8(slices.Index(ExpansionLookup, strings.ToLower(expansion))),
+		zonetype:  int8(slices.Index(ZoneLookup, strings.ToLower(zonetype))),
+		minlevel:  uint8(minlevel),
+		maxlevel:  uint8(maxlevel),
+	}
 }
 
 func displayZones(conf configuration, zonesByType sortedZones) {
-	displayCount := 0
+	displayed := false
+	none := int8(slices.Index(BonusLookup, "none"))
+	unconfirmed := int8(slices.Index(BonusLookup, "unconfirmed"))
 	for key, zones := range zonesByType {
-		if key != "none" && key != "unconfirmed" && compareLower(key, conf.bonus) {
-			fmt.Println("\n---", key, "---")
+		if key != none && key != unconfirmed && (conf.bonus == -1 || key == conf.bonus) {
+			fmt.Println("\n---", strings.ToUpper(BonusLookup[key]), "---")
 			for _, zone := range zones {
-				fmt.Println(zone.Name, zone.Expansion, zone.MinLevel, zone.MaxLevel)
-				displayCount++
+				fmt.Println(zone.Name, ExpansionLookup[zone.Expansion], zone.MinLevel, zone.MaxLevel)
+				displayed = true
 			}
 		}
 	}
 
-	if displayCount == 0 && !conf.quiet {
+	if !displayed {
 		fmt.Println("\nNo zones found. Check your filters.")
 	}
 }
 
 func main() {
+	allZones := getJson()
 	conf := getConfig()
-	allZones := getJson(conf)
 	zonesByType := processZones(conf, allZones)
 	displayZones(conf, zonesByType)
 
-	if !conf.quiet {
-		fmt.Println("\nThis app is not affiliated with the site but please support it at https://fangbreaker.zone")
-	}
+	fmt.Println("\nThis app is not affiliated with the site but please support it at https://fangbreaker.zone")
 }

@@ -2,59 +2,50 @@ package main
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
 var mockZones = []zone{
 	{
-		ID:        1,
-		ZoneID:    1,
 		Name:      "Pizza",
-		Expansion: "Green",
+		Expansion: uniqueAppend("green", &ExpansionLookup),
 		MinLevel:  1,
 		MaxLevel:  50,
-		ZoneType:  "Indoor",
-		Bonus:     "respawn",
+		ZoneType:  uniqueAppend("Indoor", &ZoneLookup),
+		Bonus:     uniqueAppend("respawn", &BonusLookup),
 	},
 	{
-		ID:        2,
-		ZoneID:    2,
 		Name:      "Chicken",
-		Expansion: "Blue",
+		Expansion: uniqueAppend("blue", &ExpansionLookup),
 		MinLevel:  1,
 		MaxLevel:  20,
-		ZoneType:  "Indoor",
-		Bonus:     "coin",
+		ZoneType:  uniqueAppend("Indoor", &ZoneLookup),
+		Bonus:     uniqueAppend("coin", &BonusLookup),
 	},
 	{
-		ID:        3,
-		ZoneID:    3,
 		Name:      "Corn",
-		Expansion: "Blue",
+		Expansion: uniqueAppend("blue", &ExpansionLookup),
 		MinLevel:  20,
 		MaxLevel:  45,
-		ZoneType:  "Outdoor",
-		Bonus:     "respawn",
+		ZoneType:  uniqueAppend("Outdoor", &ZoneLookup),
+		Bonus:     uniqueAppend("respawn", &BonusLookup),
 	},
 	{
-		ID:        4,
-		ZoneID:    4,
 		Name:      "Burger",
-		Expansion: "Blue",
+		Expansion: uniqueAppend("blue", &ExpansionLookup),
 		MinLevel:  1,
 		MaxLevel:  25,
-		ZoneType:  "Indoor",
-		Bonus:     "respawn",
+		ZoneType:  uniqueAppend("Indoor", &ZoneLookup),
+		Bonus:     uniqueAppend("respawn", &BonusLookup),
 	},
 	{
-		ID:        5,
-		ZoneID:    5,
 		Name:      "Hotdog",
-		Expansion: "Green",
+		Expansion: uniqueAppend("green", &ExpansionLookup),
 		MinLevel:  1,
 		MaxLevel:  50,
-		ZoneType:  "Outdoor",
-		Bonus:     "none",
+		ZoneType:  uniqueAppend("Outdoor", &ZoneLookup),
+		Bonus:     uniqueAppend("none", &BonusLookup),
 	},
 }
 
@@ -65,13 +56,12 @@ func Test_getConfig(t *testing.T) {
 	}{
 		{name: "Defaults",
 			want: configuration{
-				bonus:     "",
-				minlevel:  1,
-				maxlevel:  500,
 				sortlevel: "asc",
-				expansion: "",
-				quiet:     false,
-				url:       "https://fangbreaker.zone/api/bonuses/today",
+				bonus:     -1,
+				minlevel:  1,
+				maxlevel:  255,
+				expansion: -1,
+				zonetype:  -1,
 			}},
 	}
 	for _, tt := range tests {
@@ -95,136 +85,116 @@ func Test_processZones(t *testing.T) {
 	}{
 		{
 			name: "Sort_ASC",
-			args: args{configuration{minlevel: 1, maxlevel: 500}, mockZones},
+			args: args{configuration{minlevel: 1, maxlevel: 255, expansion: -1, zonetype: -1}, mockZones},
 			want: sortedZones{
-				"coin": []zone{
+				int8(slices.Index(BonusLookup, "coin")): []zone{
 					{
-						ID:        2,
-						ZoneID:    2,
 						Name:      "Chicken",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  1,
 						MaxLevel:  20,
-						ZoneType:  "Indoor",
-						Bonus:     "coin",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "coin")),
 					},
 				},
-				"respawn": []zone{
+				int8(slices.Index(BonusLookup, "respawn")): []zone{
 					{
-						ID:        1,
-						ZoneID:    1,
 						Name:      "Pizza",
-						Expansion: "Green",
+						Expansion: int8(slices.Index(ExpansionLookup, "green")),
 						MinLevel:  1,
 						MaxLevel:  50,
-						ZoneType:  "Indoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 					{
-						ID:        4,
-						ZoneID:    4,
 						Name:      "Burger",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  1,
 						MaxLevel:  25,
-						ZoneType:  "Indoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 					{
-						ID:        3,
-						ZoneID:    3,
 						Name:      "Corn",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  20,
 						MaxLevel:  45,
-						ZoneType:  "Outdoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "outdoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 				},
 			},
 		},
 		{
 			name: "Sort_DESC",
-			args: args{configuration{sortlevel: "desc", minlevel: 1, maxlevel: 500}, mockZones},
+			args: args{configuration{sortlevel: "desc", minlevel: 1, maxlevel: 255, expansion: -1, zonetype: -1}, mockZones},
 			want: sortedZones{
-				"coin": []zone{
+				int8(slices.Index(BonusLookup, "coin")): []zone{
 					{
-						ID:        2,
-						ZoneID:    2,
 						Name:      "Chicken",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  1,
 						MaxLevel:  20,
-						ZoneType:  "Indoor",
-						Bonus:     "coin",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "coin")),
 					},
 				},
-				"respawn": []zone{
+				int8(slices.Index(BonusLookup, "respawn")): []zone{
 					{
-						ID:        3,
-						ZoneID:    3,
 						Name:      "Corn",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  20,
 						MaxLevel:  45,
-						ZoneType:  "Outdoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "outdoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 					{
-						ID:        1,
-						ZoneID:    1,
 						Name:      "Pizza",
-						Expansion: "Green",
+						Expansion: int8(slices.Index(ExpansionLookup, "green")),
 						MinLevel:  1,
 						MaxLevel:  50,
-						ZoneType:  "Indoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 					{
-						ID:        4,
-						ZoneID:    4,
 						Name:      "Burger",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  1,
 						MaxLevel:  25,
-						ZoneType:  "Indoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 				},
 			},
 		},
 		{
 			name: "Expansion",
-			args: args{configuration{expansion: "Green", minlevel: 1, maxlevel: 500}, mockZones},
+			args: args{configuration{expansion: int8(slices.Index(ExpansionLookup, "green")), minlevel: 1, maxlevel: 255}, mockZones},
 			want: sortedZones{
-				"respawn": []zone{
+				int8(slices.Index(BonusLookup, "respawn")): []zone{
 					{
-						ID:        1,
-						ZoneID:    1,
 						Name:      "Pizza",
-						Expansion: "Green",
+						Expansion: int8(slices.Index(ExpansionLookup, "green")),
 						MinLevel:  1,
 						MaxLevel:  50,
-						ZoneType:  "Indoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "indoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 				},
 			},
 		},
 		{
 			name: "Zonetype",
-			args: args{configuration{zonetype: "Outdoor", minlevel: 1, maxlevel: 500}, mockZones},
+			args: args{configuration{zonetype: int8(slices.Index(ZoneLookup, "outdoor")), minlevel: 1, maxlevel: 255, expansion: -1}, mockZones},
 			want: sortedZones{
-				"respawn": []zone{
+				int8(slices.Index(BonusLookup, "respawn")): []zone{
 					{
-						ID:        3,
-						ZoneID:    3,
 						Name:      "Corn",
-						Expansion: "Blue",
+						Expansion: int8(slices.Index(ExpansionLookup, "blue")),
 						MinLevel:  20,
 						MaxLevel:  45,
-						ZoneType:  "Outdoor",
-						Bonus:     "respawn",
+						ZoneType:  int8(slices.Index(ZoneLookup, "outdoor")),
+						Bonus:     int8(slices.Index(BonusLookup, "respawn")),
 					},
 				},
 			},
@@ -234,46 +204,6 @@ func Test_processZones(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := processZones(tt.args.conf, tt.args.allZones); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("processZones() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_compareLower(t *testing.T) {
-	type args struct {
-		value        string
-		confExpected string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Empty",
-			args: args{value: "", confExpected: ""},
-			want: true,
-		},
-		{
-			name: "Same_samecase",
-			args: args{value: "Indoor", confExpected: "Indoor"},
-			want: true,
-		},
-		{
-			name: "Same_diffcase",
-			args: args{value: "Indoor", confExpected: "indoor"},
-			want: true,
-		},
-		{
-			name: "Different",
-			args: args{value: "tuesday", confExpected: "indoor"},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := compareLower(tt.args.value, tt.args.confExpected); got != tt.want {
-				t.Errorf("compareLower() = %v, want %v", got, tt.want)
 			}
 		})
 	}

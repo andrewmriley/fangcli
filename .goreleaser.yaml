@@ -22,6 +22,10 @@ builds:
       - linux
       - windows
       - darwin
+      - freebsd
+      - netbsd
+      - openbsd
+      - dragonfly
 
 archives:
   - formats: [tar.gz]
